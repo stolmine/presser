@@ -1,0 +1,47 @@
+[package]
+name = "presser-feeds"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+description = "Feed fetching and parsing for Presser"
+
+[dependencies]
+# Error handling
+anyhow.workspace = true
+thiserror.workspace = true
+
+# Serialization
+serde.workspace = true
+serde_json.workspace = true
+
+# Async runtime
+tokio.workspace = true
+
+# HTTP client
+reqwest.workspace = true
+
+# Feed parsing
+feed-rs.workspace = true
+
+# HTML/Text processing
+readability.workspace = true
+scraper.workspace = true
+html2text.workspace = true
+
+# Time handling
+chrono.workspace = true
+
+# Utilities
+url.workspace = true
+sha2.workspace = true
+
+# Logging
+tracing.workspace = true
+
+[dev-dependencies]
+tokio-test = "0.4"
+mockito = "1.2"

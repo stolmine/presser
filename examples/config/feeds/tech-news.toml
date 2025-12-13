@@ -1,0 +1,60 @@
+# Tech News Feed Configuration
+# This demonstrates feed-level overrides for technical news sources
+
+[[feed]]
+url = "https://hnrss.org/frontpage"
+name = "Hacker News - Front Page"
+tags = ["tech", "programming", "startup"]
+enabled = true
+
+# Update more frequently than default (every 2 hours)
+update_interval = "0 */2 * * *"
+
+# Custom AI prompt for this feed
+custom_prompt = """Summarize this Hacker News post. Focus on:
+1. The main technical insight or news
+2. Why it matters to developers/tech industry
+3. Any notable discussion points from comments (if applicable)
+Keep it concise and technical."""
+
+# Enable content extraction to get full article text
+extract_content = true
+
+[[feed]]
+url = "https://www.theverge.com/rss/index.xml"
+name = "The Verge"
+tags = ["tech", "consumer", "reviews"]
+enabled = true
+
+# Use default update interval (from global config)
+# update_interval is omitted
+
+custom_prompt = """Summarize this tech news article in 2-3 sentences.
+Focus on what happened, why it matters, and the broader implications."""
+
+[[feed]]
+url = "https://techcrunch.com/feed/"
+name = "TechCrunch"
+tags = ["startup", "venture", "tech"]
+enabled = true
+update_interval = "0 */3 * * *"
+
+[[feed]]
+url = "https://www.wired.com/feed/rss"
+name = "Wired"
+tags = ["tech", "culture", "science"]
+enabled = true
+
+# Disable AI summarization for this feed
+enable_ai = false
+
+[[feed]]
+url = "https://arstechnica.com/feed/"
+name = "Ars Technica"
+tags = ["tech", "science", "deep-dive"]
+enabled = true
+update_interval = "0 */4 * * *"
+
+custom_prompt = """Create a detailed summary of this technical article.
+Include key technical details, context, and implications.
+This audience appreciates depth, so 3-5 sentences is appropriate."""

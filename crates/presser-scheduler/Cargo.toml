@@ -1,0 +1,35 @@
+[package]
+name = "presser-scheduler"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+description = "Scheduling engine for Presser feed updates"
+
+[dependencies]
+# Error handling
+anyhow.workspace = true
+thiserror.workspace = true
+
+# Serialization
+serde.workspace = true
+
+# Async runtime
+tokio.workspace = true
+tokio-util.workspace = true
+
+# Time handling
+chrono.workspace = true
+cron.workspace = true
+
+# Logging
+tracing.workspace = true
+
+# Async trait
+async-trait = "0.1"
+
+[dev-dependencies]
+tokio-test = "0.4"

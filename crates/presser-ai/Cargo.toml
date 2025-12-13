@@ -1,0 +1,40 @@
+[package]
+name = "presser-ai"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+description = "AI integration for Presser - supports OpenAI, Anthropic, and local LLMs"
+
+[dependencies]
+# Error handling
+anyhow.workspace = true
+thiserror.workspace = true
+
+# Serialization
+serde.workspace = true
+serde_json.workspace = true
+
+# Async runtime
+tokio.workspace = true
+
+# HTTP client
+reqwest.workspace = true
+
+# Crypto
+sha2.workspace = true
+
+# Logging
+tracing.workspace = true
+
+[features]
+default = []
+# local-llm feature is available but requires manual installation of llama.cpp
+local-llm = []
+
+[dev-dependencies]
+tokio-test = "0.4"
+mockito = "1.2"

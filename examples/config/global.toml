@@ -1,0 +1,66 @@
+# Presser Global Configuration
+# This file contains default settings that apply to all feeds unless overridden
+
+[global]
+# Maximum number of feeds to fetch concurrently
+max_concurrent_fetches = 10
+
+# Timeout for HTTP requests in seconds
+fetch_timeout_secs = 30
+
+# User agent string for feed fetching
+user_agent = "Presser/0.1.0"
+
+# Enable content extraction (readability) by default
+extract_content = true
+
+[ai]
+# AI provider: "openai", "anthropic", or "local"
+provider = "openai"
+
+# API key for cloud providers (can also be set via OPENAI_API_KEY or ANTHROPIC_API_KEY env vars)
+# api_key = "sk-..."
+
+# Model to use
+# OpenAI: "gpt-4", "gpt-4-turbo-preview", "gpt-3.5-turbo"
+# Anthropic: "claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"
+# Local: model path or name
+model = "gpt-4"
+
+# Custom API endpoint (optional, for local LLMs or custom proxies)
+# endpoint = "http://localhost:8080/v1"
+
+# System prompt for AI summarization
+system_prompt = """You are a helpful assistant that creates concise, informative summaries of articles.
+Focus on the key points, insights, and takeaways. Keep summaries between 2-4 sentences.
+Maintain a professional but accessible tone."""
+
+# Maximum tokens for AI responses
+max_tokens = 500
+
+# Temperature for generation (0.0 = deterministic, 2.0 = very creative)
+temperature = 0.7
+
+# Enable caching of summaries based on content hash
+enable_cache = true
+
+[database]
+# Path to SQLite database file
+# Default: ~/.local/share/presser/presser.db (Linux/macOS)
+#          %APPDATA%\presser\presser.db (Windows)
+# path = "~/.local/share/presser/presser.db"
+
+# Maximum database connections
+max_connections = 5
+
+[scheduler]
+# Default update interval (cron expression)
+# Examples:
+#   "0 */6 * * *"    - Every 6 hours
+#   "0 */3 * * *"    - Every 3 hours
+#   "0 9,17 * * *"   - At 9 AM and 5 PM
+#   "0 0 * * *"      - Daily at midnight
+default_interval = "0 */6 * * *"
+
+# Enable automatic updates via scheduler
+auto_update = true

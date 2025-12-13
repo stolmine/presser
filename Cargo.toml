@@ -1,0 +1,82 @@
+[workspace]
+members = [
+    "crates/presser-core",
+    "crates/presser-config",
+    "crates/presser-feeds",
+    "crates/presser-scheduler",
+    "crates/presser-ai",
+    "crates/presser-db",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Presser Contributors"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/yourusername/presser"
+keywords = ["rss", "feed", "ai", "newsletter", "reader"]
+categories = ["command-line-utilities", "web-programming"]
+
+[workspace.dependencies]
+# Internal crates
+presser-config = { path = "crates/presser-config" }
+presser-feeds = { path = "crates/presser-feeds" }
+presser-scheduler = { path = "crates/presser-scheduler" }
+presser-ai = { path = "crates/presser-ai" }
+presser-db = { path = "crates/presser-db" }
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+tokio-util = "0.7"
+
+# HTTP client
+reqwest = { version = "0.11", features = ["json", "rustls-tls"], default-features = false }
+
+# Database
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "sqlite", "chrono", "migrate"] }
+
+# Time handling
+chrono = { version = "0.4", features = ["serde"] }
+cron = "0.12"
+
+# Feed parsing
+feed-rs = "1.4"
+
+# HTML/Text processing
+readability = "0.3"
+scraper = "0.18"
+html2text = "0.12"
+
+# Crypto
+sha2 = "0.10"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# CLI
+clap = { version = "4.4", features = ["derive", "cargo"] }
+crossterm = "0.27"
+ratatui = "0.25"
+
+# Utilities
+dirs = "5.0"
+regex = "1.10"
+url = "2.5"
+async-trait = "0.1"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+opt-level = "z"
