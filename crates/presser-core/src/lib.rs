@@ -5,6 +5,7 @@
 
 pub mod commands;
 pub mod engine;
+pub mod tasks;
 pub mod ui;
 
 pub use commands::*;

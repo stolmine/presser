@@ -8,7 +8,7 @@ tags = ["newsletter", "tech", "curated"]
 enabled = true
 
 # Newsletters are typically daily, so check once per day
-update_interval = "0 9 * * *"
+update_interval = "0 0 9 * * *"
 
 custom_prompt = """This is a curated tech newsletter. Summarize the key stories and trends mentioned.
 Group similar topics together and highlight the most important developments."""
@@ -21,7 +21,7 @@ url = "https://www.densediscovery.com/feed"
 name = "Dense Discovery"
 tags = ["newsletter", "design", "culture"]
 enabled = true
-update_interval = "0 10 * * 0"  # Sunday mornings
+update_interval = "0 0 10 * * 0"  # Sunday mornings
 
 custom_prompt = """Summarize this design and culture newsletter.
 Highlight interesting links, tools, or insights about design, technology, and culture."""
@@ -31,7 +31,7 @@ url = "https://bytes.dev/rss.xml"
 name = "Bytes (JavaScript)"
 tags = ["newsletter", "javascript", "web-dev"]
 enabled = true
-update_interval = "0 9 * * 1,4"  # Monday and Thursday mornings
+update_interval = "0 0 9 * * 1,4"  # Monday and Thursday mornings
 
 custom_prompt = """Summarize this JavaScript newsletter.
 Focus on new libraries, framework updates, and important web development news."""
@@ -41,21 +41,21 @@ url = "https://react.statuscode.com/rss"
 name = "React Status"
 tags = ["newsletter", "react", "web-dev"]
 enabled = true
-update_interval = "0 9 * * 3"  # Wednesday mornings
+update_interval = "0 0 9 * * 3"  # Wednesday mornings
 
 [[feed]]
 url = "https://nodeweekly.com/rss"
 name = "Node Weekly"
 tags = ["newsletter", "nodejs", "backend"]
 enabled = true
-update_interval = "0 9 * * 4"  # Thursday mornings
+update_interval = "0 0 9 * * 4"  # Thursday mornings
 
 [[feed]]
 url = "https://postgresweekly.com/rss"
 name = "Postgres Weekly"
 tags = ["newsletter", "database", "postgres"]
 enabled = true
-update_interval = "0 9 * * 4"  # Thursday mornings
+update_interval = "0 0 9 * * 4"  # Thursday mornings
 
 custom_prompt = """Summarize this database newsletter focusing on PostgreSQL.
 Highlight performance tips, new features, and interesting use cases."""
@@ -65,7 +65,7 @@ url = "https://changelog.com/feed"
 name = "Changelog"
 tags = ["newsletter", "podcast", "interviews"]
 enabled = true
-update_interval = "0 */6 * * *"
+update_interval = "0 0 */6 * * *"
 
 # Disable AI for this feed - just track new episodes
 enable_ai = false

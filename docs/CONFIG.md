@@ -41,7 +41,7 @@ enable_cache = true
 max_connections = 5
 
 [scheduler]
-default_interval = "0 */6 * * *"
+default_interval = "0 0 */6 * * *"
 auto_update = true
 ```
 
@@ -177,13 +177,13 @@ Keep summaries concise but informative."""
 #### `default_interval`
 
 - **Type**: String (cron expression)
-- **Default**: `"0 */6 * * *"` (every 6 hours)
+- **Default**: `"0 0 */6 * * *"` (every 6 hours)
 - **Description**: Default update interval for feeds
 - **Examples**:
-  - `"0 */3 * * *"` - Every 3 hours
-  - `"0 9,17 * * *"` - 9 AM and 5 PM daily
-  - `"0 0 * * *"` - Daily at midnight
-  - `"0 9 * * 1-5"` - 9 AM on weekdays
+  - `"0 0 */3 * * *"` - Every 3 hours
+  - `"0 0 9,17 * * *"` - 9 AM and 5 PM daily
+  - `"0 0 0 * * *"` - Daily at midnight
+  - `"0 0 9 * * 1-5"` - 9 AM on weekdays
 
 #### `auto_update`
 
@@ -204,7 +204,7 @@ url = "https://example.com/feed.xml"
 name = "Example Feed"
 tags = ["tech", "news"]
 enabled = true
-update_interval = "0 */2 * * *"
+update_interval = "0 0 */2 * * *"
 custom_prompt = "Custom summarization instructions..."
 extract_content = true
 enable_ai = true
@@ -245,7 +245,7 @@ enable_ai = true
 - **Type**: String (cron expression)
 - **Default**: From global config
 - **Description**: Custom update interval for this feed
-- **Example**: `update_interval = "0 */2 * * *"`
+- **Example**: `update_interval = "0 0 */2 * * *"`
 
 #### `custom_prompt`
 
@@ -275,32 +275,33 @@ Focus on the technical innovation and why it matters to developers."""
 
 ## Cron Expression Reference
 
-Cron expressions follow the standard 5-field format:
+Cron expressions use the 6-field format (with seconds):
 
 ```
-┌───────────── minute (0 - 59)
-│ ┌───────────── hour (0 - 23)
-│ │ ┌───────────── day of month (1 - 31)
-│ │ │ ┌───────────── month (1 - 12)
-│ │ │ │ ┌───────────── day of week (0 - 6) (Sunday = 0)
-│ │ │ │ │
-* * * * *
+┌───────────── second (0 - 59)
+│ ┌───────────── minute (0 - 59)
+│ │ ┌───────────── hour (0 - 23)
+│ │ │ ┌───────────── day of month (1 - 31)
+│ │ │ │ ┌───────────── month (1 - 12)
+│ │ │ │ │ ┌───────────── day of week (0 - 6) (Sunday = 0)
+│ │ │ │ │ │
+* * * * * *
 ```
 
 ### Common Patterns
 
-- `0 */6 * * *` - Every 6 hours
-- `0 */3 * * *` - Every 3 hours
-- `0 */2 * * *` - Every 2 hours
-- `0 * * * *` - Every hour
-- `30 * * * *` - Every hour at 30 minutes past
-- `0 9 * * *` - Daily at 9 AM
-- `0 9,17 * * *` - Daily at 9 AM and 5 PM
-- `0 0 * * *` - Daily at midnight
-- `0 0 * * 0` - Weekly on Sunday
-- `0 9 * * 1` - Weekly on Monday at 9 AM
-- `0 9 * * 1-5` - Weekdays at 9 AM
-- `0 0 1 * *` - Monthly on the 1st
+- `0 0 */6 * * *` - Every 6 hours
+- `0 0 */3 * * *` - Every 3 hours
+- `0 0 */2 * * *` - Every 2 hours
+- `0 0 * * * *` - Every hour
+- `0 30 * * * *` - Every hour at 30 minutes past
+- `0 0 9 * * *` - Daily at 9 AM
+- `0 0 9,17 * * *` - Daily at 9 AM and 5 PM
+- `0 0 0 * * *` - Daily at midnight
+- `0 0 0 * * 0` - Weekly on Sunday
+- `0 0 9 * * 1` - Weekly on Monday at 9 AM
+- `0 0 9 * * 1-5` - Weekdays at 9 AM
+- `0 0 0 1 * *` - Monthly on the 1st
 
 ## Example Configurations
 
@@ -320,13 +321,13 @@ temperature = 0.7
 url = "https://hnrss.org/frontpage"
 name = "Hacker News"
 tags = ["tech", "programming"]
-update_interval = "0 */2 * * *"
+update_interval = "0 0 */2 * * *"
 
 [[feed]]
 url = "https://techcrunch.com/feed/"
 name = "TechCrunch"
 tags = ["startup", "venture"]
-update_interval = "0 */3 * * *"
+update_interval = "0 0 */3 * * *"
 ```
 
 ### Newsletter Setup
@@ -337,14 +338,14 @@ update_interval = "0 */3 * * *"
 url = "https://tldr.tech/tech/rss"
 name = "TLDR Newsletter"
 tags = ["newsletter", "curated"]
-update_interval = "0 9 * * *"  # Daily at 9 AM
+update_interval = "0 0 9 * * *"  # Daily at 9 AM
 extract_content = false  # Already summarized
 
 [[feed]]
 url = "https://bytes.dev/rss.xml"
 name = "Bytes (JavaScript)"
 tags = ["newsletter", "javascript"]
-update_interval = "0 9 * * 1,4"  # Monday and Thursday
+update_interval = "0 0 9 * * 1,4"  # Monday and Thursday
 ```
 
 ### Local LLM Setup

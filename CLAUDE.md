@@ -1,0 +1,6 @@
+- keep all files down to lengths readable by agents in a single pass
+- stay DRY as much as possible, this should be our guiding code design principle, as it eliminates many errors and enables much simpler refactoring and feature addition
+- use agents whenever it is efficient to save on context
+- task-implementors should implement all changes, code-optimizers should run code review on their work after each implementation and before manual testing
+- update appropriate docs on feature changes
+- 

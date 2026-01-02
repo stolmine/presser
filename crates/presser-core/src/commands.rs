@@ -1,67 +1,72 @@
 //! CLI command implementations
 
 use anyhow::Result;
+use presser_db::Feed;
 
-/// Add a new feed
-pub async fn add_feed(url: &str, name: Option<&str>) -> Result<()> {
-    println!("Adding feed: {}", url);
-    if let Some(name) = name {
-        println!("Name: {}", name);
+fn slugify(s: &str) -> String {
+    s.to_lowercase()
+        .chars()
+        .map(|c| if c.is_alphanumeric() { c } else { '-' })
+        .collect::<String>()
+        .split('-')
+        .filter(|s| !s.is_empty())
+        .collect::<Vec<_>>()
+        .join("-")
+}
+
+pub async fn add_feed(engine: &crate::Engine, url: &str, name: Option<&str>) -> Result<()> {
+    println!("Fetching feed: {}", url);
+    let (metadata, _) = engine.fetcher().fetch(url).await?;
+
+    let title = name.map(String::from).unwrap_or_else(|| metadata.title.clone());
+    let feed = Feed {
+        id: slugify(&title),
+        url: url.to_string(),
+        title,
+        description: metadata.description,
+        site_url: metadata.site_url,
+        ..Default::default()
+    };
+
+    engine.database().upsert_feed(&feed).await?;
+    println!("Added feed: {} ({})", feed.title, feed.id);
+    Ok(())
+}
+
+pub async fn remove_feed(engine: &crate::Engine, id: &str) -> Result<()> {
+    engine.database().delete_feed(id).await?;
+    println!("Removed feed: {}", id);
+    Ok(())
+}
+
+pub async fn list_feeds(engine: &crate::Engine) -> Result<()> {
+    let feeds = engine.database().get_all_feeds().await?;
+    if feeds.is_empty() {
+        println!("No feeds configured. Use 'presser add <url>' to add one.");
+    } else {
+        for feed in feeds {
+            let status = if feed.enabled { "" } else { " [disabled]" };
+            println!("{}: {} ({} entries){}", feed.id, feed.title, feed.entry_count, status);
+        }
     }
-
-    // TODO: Implement feed addition
-    // 1. Load config
-    // 2. Open database
-    // 3. Fetch feed to validate URL
-    // 4. Add to database
-    // 5. Update config
-
-    todo!("Implement add_feed")
-}
-
-/// Remove a feed
-pub async fn remove_feed(id: &str) -> Result<()> {
-    println!("Removing feed: {}", id);
-
-    // TODO: Implement feed removal
-    // 1. Load config
-    // 2. Open database
-    // 3. Delete feed from database
-    // 4. Update config
-
-    todo!("Implement remove_feed")
-}
-
-/// List all feeds
-pub async fn list_feeds() -> Result<()> {
-    println!("Listing feeds...");
-
-    // TODO: Implement feed listing
-    // 1. Load config
-    // 2. Open database
-    // 3. Query all feeds
-    // 4. Display in table format
-
-    todo!("Implement list_feeds")
+    Ok(())
 }
 
 /// Update feeds
-pub async fn update_feeds(feed_id: Option<&str>) -> Result<()> {
-    if let Some(id) = feed_id {
-        println!("Updating feed: {}", id);
-    } else {
-        println!("Updating all feeds...");
+pub async fn update_feeds(engine: &crate::Engine, feed_id: Option<&str>) -> Result<()> {
+    match feed_id {
+        Some(id) => {
+            println!("Updating feed: {}", id);
+            engine.update_feed(id).await?;
+            println!("Feed updated successfully");
+        }
+        None => {
+            println!("Updating all feeds...");
+            engine.update_all_feeds().await?;
+            println!("All feeds updated");
+        }
     }
-
-    // TODO: Implement feed update
-    // 1. Load config
-    // 2. Open database
-    // 3. Fetch feed(s)
-    // 4. Extract content
-    // 5. Generate summaries
-    // 6. Store in database
-
-    todo!("Implement update_feeds")
+    Ok(())
 }
 
 /// Generate digest
@@ -79,20 +84,6 @@ pub async fn generate_digest(days: u32, format: &str) -> Result<()> {
     todo!("Implement generate_digest")
 }
 
-/// Start interactive TUI
-pub async fn start_tui() -> Result<()> {
-    println!("Starting TUI...");
-
-    // TODO: Implement TUI
-    // 1. Load config
-    // 2. Open database
-    // 3. Initialize ratatui
-    // 4. Start event loop
-    // 5. Handle user input
-
-    todo!("Implement start_tui")
-}
-
 /// Start scheduler daemon
 pub async fn start_daemon() -> Result<()> {
     println!("Starting daemon...");
@@ -108,15 +99,19 @@ pub async fn start_daemon() -> Result<()> {
 }
 
 /// Show database statistics
-pub async fn show_stats() -> Result<()> {
-    println!("Database statistics:");
+pub async fn show_stats(engine: &crate::Engine) -> Result<()> {
+    let stats = engine.database().get_stats().await?;
+    println!("Database Statistics:");
+    println!("  Feeds:     {}", stats.total_feeds);
+    println!("  Entries:   {} ({} unread)", stats.total_entries, stats.unread_entries);
+    println!("  Summaries: {}", stats.total_summaries);
+    Ok(())
+}
 
-    // TODO: Implement stats display
-    // 1. Open database
-    // 2. Query statistics
-    // 3. Display in readable format
-
-    todo!("Implement show_stats")
+/// Start interactive TUI
+pub async fn run_tui(engine: std::sync::Arc<crate::Engine>) -> Result<()> {
+    let mut app = crate::ui::App::new(engine).await?;
+    app.run().await
 }
 
 /// Initialize configuration

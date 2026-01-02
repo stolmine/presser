@@ -178,6 +178,26 @@ pub struct FeedConfig {
     pub enabled: bool,
 }
 
+/// Intermediate struct for parsing global.toml
+#[derive(Debug, Clone, Deserialize, Default)]
+struct GlobalToml {
+    #[serde(default)]
+    global: GlobalConfig,
+    #[serde(default)]
+    ai: Option<AiConfig>,
+    #[serde(default)]
+    database: Option<DatabaseConfig>,
+    #[serde(default)]
+    scheduler: Option<SchedulerConfig>,
+}
+
+/// Intermediate struct for parsing feed TOML files
+#[derive(Debug, Clone, Deserialize)]
+struct FeedToml {
+    #[serde(default)]
+    feed: Vec<FeedConfig>,
+}
+
 impl Config {
     /// Load configuration from the default config directory
     ///
@@ -191,15 +211,68 @@ impl Config {
 
     /// Load configuration from a specific directory
     pub fn load_from_dir(dir: &Path) -> Result<Self> {
-        let _global_path = dir.join("global.toml");
+        let global_path = dir.join("global.toml");
+        let feeds_dir = dir.join("feeds");
 
-        // TODO: Implement configuration loading
-        // 1. Read and parse global.toml
-        // 2. Read and parse all files in feeds/ directory
-        // 3. Merge feed configs with global defaults
-        // 4. Validate the resulting configuration
+        // 1. Load global.toml (or use defaults if missing)
+        let global_toml = if global_path.exists() {
+            let content = std::fs::read_to_string(&global_path)
+                .with_context(|| format!("Failed to read {}", global_path.display()))?;
+            toml::from_str::<GlobalToml>(&content)
+                .with_context(|| format!("Failed to parse {}", global_path.display()))?
+        } else {
+            GlobalToml::default()
+        };
 
-        todo!("Implement config loading from {}", dir.display())
+        // 2. Load feeds from feeds/ directory
+        let mut feeds = HashMap::new();
+        if feeds_dir.exists() && feeds_dir.is_dir() {
+            for entry in std::fs::read_dir(&feeds_dir)
+                .with_context(|| format!("Failed to read {}", feeds_dir.display()))?
+            {
+                let entry = entry?;
+                let path = entry.path();
+                if path.extension().map_or(false, |ext| ext == "toml") {
+                    let content = std::fs::read_to_string(&path)
+                        .with_context(|| format!("Failed to read {}", path.display()))?;
+                    let feed_toml: FeedToml = toml::from_str(&content)
+                        .with_context(|| format!("Failed to parse {}", path.display()))?;
+                    for feed in feed_toml.feed {
+                        feeds.insert(feed.url.clone(), feed);
+                    }
+                }
+            }
+        }
+
+        // 3. Build final Config (AI defaults to Local if not configured)
+        let ai = global_toml.ai.unwrap_or_else(|| AiConfig {
+            provider: AiProvider::Local,
+            api_key: None,
+            model: "local".to_string(),
+            endpoint: Some("http://localhost:8080".to_string()),
+            system_prompt: default_system_prompt(),
+            max_tokens: default_max_tokens(),
+            temperature: default_temperature(),
+            enable_cache: true,
+        });
+
+        let config = Config {
+            global: global_toml.global,
+            ai,
+            database: global_toml.database.unwrap_or_else(|| DatabaseConfig {
+                path: default_db_path(),
+                max_connections: default_max_connections(),
+            }),
+            scheduler: global_toml.scheduler.unwrap_or_else(|| SchedulerConfig {
+                default_interval: default_update_interval(),
+                auto_update: default_true(),
+            }),
+            feeds,
+        };
+
+        // 4. Validate
+        config.validate().map_err(|e| anyhow::anyhow!(e))?;
+        Ok(config)
     }
 
     /// Get the default configuration directory
@@ -240,16 +313,78 @@ fn default_db_path() -> PathBuf {
         .join("presser.db")
 }
 fn default_max_connections() -> u32 { 5 }
-fn default_update_interval() -> String { "0 */6 * * *".to_string() } // Every 6 hours
+fn default_update_interval() -> String { "0 0 */6 * * *".to_string() } // Every 6 hours (sec min hour day month weekday)
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tempfile::TempDir;
 
     #[test]
     fn test_default_values() {
         assert_eq!(default_max_concurrent_fetches(), 10);
         assert_eq!(default_fetch_timeout(), 30);
         assert!(default_true());
+    }
+
+    #[test]
+    fn test_load_from_dir_empty() {
+        let temp_dir = TempDir::new().unwrap();
+        let result = Config::load_from_dir(temp_dir.path());
+        // Should succeed with default AI config
+        assert!(result.is_ok());
+        let config = result.unwrap();
+        assert_eq!(config.ai.provider, AiProvider::Local);
+    }
+
+    #[test]
+    fn test_load_from_dir_global_only() {
+        let temp_dir = TempDir::new().unwrap();
+        std::fs::write(
+            temp_dir.path().join("global.toml"),
+            r#"
+[ai]
+provider = "local"
+model = "test-model"
+endpoint = "http://localhost:8080"
+"#,
+        )
+        .unwrap();
+
+        let config = Config::load_from_dir(temp_dir.path()).unwrap();
+        assert_eq!(config.ai.model, "test-model");
+        assert!(config.feeds.is_empty());
+    }
+
+    #[test]
+    fn test_load_from_dir_with_feeds() {
+        let temp_dir = TempDir::new().unwrap();
+        let feeds_dir = temp_dir.path().join("feeds");
+        std::fs::create_dir(&feeds_dir).unwrap();
+
+        std::fs::write(
+            temp_dir.path().join("global.toml"),
+            r#"
+[ai]
+provider = "local"
+model = "test-model"
+endpoint = "http://localhost:8080"
+"#,
+        )
+        .unwrap();
+
+        std::fs::write(
+            feeds_dir.join("test.toml"),
+            r#"
+[[feed]]
+url = "https://example.com/feed"
+name = "Test Feed"
+"#,
+        )
+        .unwrap();
+
+        let config = Config::load_from_dir(temp_dir.path()).unwrap();
+        assert_eq!(config.feeds.len(), 1);
+        assert!(config.feeds.contains_key("https://example.com/feed"));
     }
 }

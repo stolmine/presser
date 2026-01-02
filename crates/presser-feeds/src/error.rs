@@ -21,9 +21,9 @@ pub enum FeedError {
     #[error("Invalid feed URL: {0}")]
     InvalidUrl(String),
 
-    /// Feed not found (404)
-    #[error("Feed not found: {0}")]
-    NotFound(String),
+    /// HTTP status error (4xx, 5xx)
+    #[error("HTTP {status} for: {url}")]
+    HttpStatus { url: String, status: u16 },
 
     /// Timeout
     #[error("Request timeout for: {0}")]

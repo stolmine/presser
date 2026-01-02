@@ -38,7 +38,7 @@ Configuration management crate
 - `src/error.rs` - Configuration-specific errors
 - `src/validation.rs` - Config validation functions
 
-**Status:** Structure complete, loading logic marked as TODO
+**Status:** ✅ Complete - Config loading, validation, default AI config
 
 ### Crate: presser-feeds
 
@@ -51,7 +51,7 @@ Feed fetching and parsing crate
 - `src/extractor.rs` - Content extraction with readability
 - `src/error.rs` - Feed-specific errors
 
-**Status:** Structure complete, fetch/parse logic marked as TODO
+**Status:** ✅ Complete - HTTP fetching, RSS/Atom parsing, readability extraction
 
 ### Crate: presser-scheduler
 
@@ -63,7 +63,7 @@ Task scheduling crate
 - `src/task.rs` - Task trait and implementations
 - `src/error.rs` - Scheduler-specific errors
 
-**Status:** Structure complete, scheduler loop marked as TODO
+**Status:** ✅ Complete - Cron scheduling, task execution, concurrency control
 
 ### Crate: presser-ai
 
@@ -90,7 +90,7 @@ SQLite database crate
 - `src/error.rs` - Database-specific errors
 - `migrations/20240101000001_initial_schema.sql` - Complete schema with FTS
 
-**Status:** Structure and schema complete, queries marked as TODO
+**Status:** ✅ Complete - All 14 queries implemented with FTS5 search
 **Note:** Using runtime queries to avoid compile-time DB requirement
 
 ### Crate: presser-core
@@ -107,7 +107,7 @@ Main application binary
 - `src/ui/app.rs` - TUI application with ratatui
 - `src/ui/widgets.rs` - Custom widgets (TODO)
 
-**Status:** Structure complete, all commands marked as TODO
+**Status:** ✅ CLI commands working (add, remove, list, update, stats), basic TUI with two-panel layout
 
 ## Implementation Status by Feature
 
@@ -123,73 +123,66 @@ Main application binary
 - Example configurations
 - CLI command structure
 - Compilation and type checking
+- **Config loading and validation** (presser-config)
+- **All database queries** (presser-db) - 14 queries with FTS5 search
+- **Feed fetching and parsing** (presser-feeds) - HTTP fetch, RSS/Atom parse, readability extraction
+- **Task scheduler** (presser-scheduler) - Cron scheduling with concurrency control
+- **Core engine** (presser-core) - Feed management and orchestration
+- **CLI commands** - add, remove, list, update, stats
+- **Basic TUI** - Two-panel layout with vim-style navigation
 
 ### 🔨 Skeleton/TODO
 
-- Config file loading and parsing
-- Feed fetching and parsing
-- Content extraction
-- Scheduler main loop
-- AI provider API calls
-- Database query implementations
-- CLI command logic
-- TUI rendering and event handling
-- Engine orchestration
+- AI provider API calls (presser-ai) - awaiting user's model server
+- Daemon command
+- Digest command
+- Init command
 
 ## Next Steps for Implementation
 
-### Phase 1: Core Functionality
+### Phase 1: AI Integration
 
-1. **Config Loading** (presser-config)
-   - Implement TOML file loading
-   - Implement config merging logic
-   - Add environment variable support
-
-2. **Database** (presser-db)
-   - Implement query functions with sqlx
-   - Add database migration runner
-   - Test with actual SQLite database
-
-3. **Feed Fetching** (presser-feeds)
-   - Implement HTTP fetching
-   - Integrate feed-rs parser
-   - Add readability content extraction
-
-### Phase 2: AI Integration
-
-4. **AI Providers** (presser-ai)
-   - Implement OpenAI client
+1. **AI Providers** (presser-ai) - Awaiting user's model server
+   - Implement OpenAI-compatible client
    - Implement Anthropic client
    - Add local LLM support (optional)
    - Implement caching logic
 
-### Phase 3: Automation
+### Phase 2: Additional Commands
 
-5. **Scheduler** (presser-scheduler)
-   - Implement scheduler main loop
-   - Add task execution
-   - Handle concurrency limits
+2. **Init Command** (presser-core)
+   - Create default config directory structure
+   - Generate sample global.toml
+   - Initialize database
 
-### Phase 4: User Interface
+3. **Daemon Command** (presser-core)
+   - Start scheduler as background process
+   - Handle graceful shutdown
+   - Add PID file management
 
-6. **CLI Commands** (presser-core)
-   - Implement all command handlers
-   - Wire up Engine methods
-   - Add proper error handling
+4. **Digest Command** (presser-core)
+   - Fetch unread entries
+   - Generate AI summaries
+   - Format as markdown/HTML
+   - Save or output digest
 
-7. **TUI** (presser-core)
-   - Implement UI rendering
-   - Add keybindings
-   - Create custom widgets
+### Phase 3: TUI Enhancements
 
-### Phase 5: Polish
+5. **Enhanced TUI** (presser-core)
+   - Content panel for article viewing
+   - Mark as read/unread
+   - Full-text search
+   - Digest generation from UI
+   - Better error display
 
-8. **Testing**
+### Phase 4: Polish
+
+6. **Testing**
    - Add unit tests for all crates
    - Add integration tests
    - Create mock providers for testing
 
-9. **Documentation**
+7. **Documentation**
    - Add usage examples
    - Create troubleshooting guide
    - Add contribution guidelines
@@ -256,6 +249,8 @@ To use this project:
 ---
 
 **Created**: 2025-12-13
-**Status**: Complete scaffold, ready for implementation
+**Last Updated**: 2026-01-02
+**Status**: Core functionality implemented, AI integration pending
 **Compiles**: Yes ✅
-**Dependencies resolved**: Yes ✅
+**Working Commands**: add, remove, list, update, stats, tui ✅
+**Pending**: AI integration, daemon, digest, init

@@ -32,11 +32,8 @@ cargo build --release
 ### Initial Setup
 
 ```bash
-# Initialize configuration
-presser init
-
 # Add your first feed
-presser add https://hnrss.org/frontpage --name "Hacker News"
+presser add https://hnrss.org/frontpage
 
 # Update feeds
 presser update
@@ -84,10 +81,10 @@ custom_prompt = "Focus on technical insights..."
 
 ```bash
 # Add a feed
-presser add <url> --name "Feed Name"
+presser add <url>
 
 # Remove a feed
-presser remove <feed-id>
+presser remove <id>
 
 # List all feeds
 presser list
@@ -96,32 +93,29 @@ presser list
 presser update
 
 # Update a specific feed
-presser update <feed-id>
+presser update <id>
 
-# Generate a digest
-presser digest --days 1 --format markdown
+# Show statistics
+presser stats
 
 # Start the TUI
 presser tui
 
-# Start the scheduler daemon
-presser daemon
+# Generate a digest (not yet implemented)
+presser digest --days 1 --format markdown
 
-# Show statistics
-presser stats
+# Start the scheduler daemon (not yet implemented)
+presser daemon
 ```
 
 ### Terminal UI
 
 The TUI provides an interactive interface for browsing feeds and reading articles:
 
-- **Tab**: Switch between panels (feeds, entries, content)
-- **↑/↓**: Navigate lists
+- **Tab**: Switch between panels (feeds, entries)
+- **j/k or ↑/↓**: Navigate lists
 - **Enter**: Select feed/entry
-- **Space**: Mark as read/unread
 - **r**: Refresh current feed
-- **s**: Search
-- **d**: Generate digest
 - **q**: Quit
 
 ## Architecture

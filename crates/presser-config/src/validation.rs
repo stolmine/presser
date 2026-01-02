@@ -1,7 +1,17 @@
 //! Configuration validation
 
 use crate::{Config, ConfigError};
+use cron::Schedule;
+use std::str::FromStr;
 use url::Url;
+
+/// Validate a cron expression
+fn validate_cron_expression(expr: &str, context: &str) -> Result<(), ConfigError> {
+    Schedule::from_str(expr).map_err(|e| {
+        ConfigError::InvalidCron(format!("{}: '{}' - {}", context, expr, e))
+    })?;
+    Ok(())
+}
 
 /// Validate the entire configuration
 pub fn validate_config(config: &Config) -> Result<(), ConfigError> {
@@ -78,14 +88,12 @@ fn validate_ai(ai: &crate::AiConfig) -> Result<(), ConfigError> {
 
 /// Validate scheduler configuration
 fn validate_scheduler(scheduler: &crate::SchedulerConfig) -> Result<(), ConfigError> {
-    // TODO: Validate cron expression syntax
-    // For now, just check it's not empty
     if scheduler.default_interval.is_empty() {
         return Err(ConfigError::InvalidCron(
             "default_interval cannot be empty".to_string(),
         ));
     }
-
+    validate_cron_expression(&scheduler.default_interval, "scheduler.default_interval")?;
     Ok(())
 }
 
@@ -109,7 +117,7 @@ fn validate_feed(feed_id: &str, feed: &crate::FeedConfig) -> Result<(), ConfigEr
                 format!("Feed '{}' has empty update_interval", feed_id),
             ));
         }
-        // TODO: Validate cron expression syntax
+        validate_cron_expression(interval, &format!("feed '{}' update_interval", feed_id))?;
     }
 
     Ok(())
@@ -130,5 +138,17 @@ mod tests {
         assert!(validate_global(&global).is_err());
     }
 
-    // TODO: Add more validation tests
+    #[test]
+    fn test_validate_cron_valid() {
+        // cron crate uses 6-field format: sec min hour day month weekday
+        assert!(validate_cron_expression("0 0 */6 * * *", "test").is_ok());
+        assert!(validate_cron_expression("0 0 9 * * 1-5", "test").is_ok());
+        assert!(validate_cron_expression("0 0 0 1 * *", "test").is_ok());
+    }
+
+    #[test]
+    fn test_validate_cron_invalid() {
+        assert!(validate_cron_expression("invalid", "test").is_err());
+        assert!(validate_cron_expression("* * * *", "test").is_err()); // only 4 fields
+    }
 }

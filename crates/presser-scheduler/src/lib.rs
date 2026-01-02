@@ -16,15 +16,24 @@
 //! ```rust,no_run
 //! use presser_scheduler::{Scheduler, Task};
 //! use std::sync::Arc;
+//! use async_trait::async_trait;
+//!
+//! struct FeedUpdater;
+//!
+//! #[async_trait]
+//! impl Task for FeedUpdater {
+//!     async fn execute(&self) -> anyhow::Result<()> {
+//!         println!("Updating feed...");
+//!         Ok(())
+//!     }
+//!     fn name(&self) -> &str { "feed-updater" }
+//! }
 //!
 //! # async fn example() -> anyhow::Result<()> {
 //! let scheduler = Scheduler::new(10)?;
 //!
-//! // Schedule a task to run every 6 hours
-//! scheduler.schedule("feed-1", "0 */6 * * *", || async {
-//!     println!("Updating feed...");
-//!     Ok(())
-//! }).await?;
+//! // Schedule a task to run every 6 hours (6-field cron: sec min hour day month weekday)
+//! scheduler.schedule("feed-1", "0 0 */6 * * *", Arc::new(FeedUpdater)).await?;
 //!
 //! scheduler.start().await?;
 //! # Ok(())
@@ -35,7 +44,8 @@ use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::RwLock;
+use std::time::Duration;
+use tokio::sync::{broadcast, RwLock, Semaphore};
 use tokio::task::JoinHandle;
 
 pub mod error;
@@ -46,9 +56,6 @@ pub use task::Task;
 
 /// Scheduler for managing periodic tasks
 pub struct Scheduler {
-    /// Maximum concurrent tasks
-    max_concurrent: usize,
-
     /// Scheduled tasks
     tasks: Arc<RwLock<HashMap<String, ScheduledTask>>>,
 
@@ -57,6 +64,12 @@ pub struct Scheduler {
 
     /// Whether the scheduler is running
     running: Arc<RwLock<bool>>,
+
+    /// Shutdown signal
+    shutdown_tx: broadcast::Sender<()>,
+
+    /// Concurrency limiter
+    semaphore: Arc<Semaphore>,
 }
 
 /// A scheduled task with its cron schedule
@@ -84,11 +97,15 @@ impl Scheduler {
             anyhow::bail!("max_concurrent must be greater than 0");
         }
 
+        let (shutdown_tx, _) = broadcast::channel(1);
+        let semaphore = Arc::new(Semaphore::new(max_concurrent));
+
         Ok(Self {
-            max_concurrent,
             tasks: Arc::new(RwLock::new(HashMap::new())),
             handles: Arc::new(RwLock::new(Vec::new())),
             running: Arc::new(RwLock::new(false)),
+            shutdown_tx,
+            semaphore,
         })
     }
 
@@ -154,19 +171,87 @@ impl Scheduler {
 
         tracing::info!("Starting scheduler");
 
-        // TODO: Implement scheduler main loop
-        // 1. Check for tasks that need to run
-        // 2. Execute tasks respecting concurrency limits
-        // 3. Update next_run times
-        // 4. Handle errors and retries
+        let mut shutdown_rx = self.shutdown_tx.subscribe();
 
-        todo!("Implement scheduler main loop")
+        loop {
+            tokio::select! {
+                _ = shutdown_rx.recv() => {
+                    tracing::info!("Scheduler received shutdown signal");
+                    break;
+                }
+                _ = tokio::time::sleep(Duration::from_secs(1)) => {
+                    self.tick().await;
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Process one scheduler tick
+    async fn tick(&self) {
+        let now = Utc::now();
+
+        // Collect tasks to run while holding lock briefly
+        let tasks_to_run: Vec<_> = {
+            let mut tasks = self.tasks.write().await;
+            tasks
+                .values_mut()
+                .filter_map(|task| {
+                    if task.next_run <= now {
+                        let executor = task.executor.clone();
+                        let id = task.id.clone();
+
+                        task.last_run = Some(now);
+                        if let Some(next) = task.schedule.upcoming(Utc).next() {
+                            task.next_run = next;
+                        }
+
+                        Some((id, executor))
+                    } else {
+                        None
+                    }
+                })
+                .collect()
+        };
+        // Lock released here
+
+        // Spawn tasks outside the lock
+        let mut new_handles = Vec::new();
+        for (id, executor) in tasks_to_run {
+            let permit = match self.semaphore.clone().try_acquire_owned() {
+                Ok(p) => p,
+                Err(_) => {
+                    tracing::debug!("Concurrency limit reached, skipping task: {}", id);
+                    continue;
+                }
+            };
+
+            tracing::debug!("Executing task: {}", id);
+
+            let handle = tokio::spawn(async move {
+                let _permit = permit;
+                if let Err(e) = executor.execute().await {
+                    tracing::error!("Task {} failed: {}", id, e);
+                }
+            });
+
+            new_handles.push(handle);
+        }
+
+        // Store handles
+        if !new_handles.is_empty() {
+            let mut handles = self.handles.write().await;
+            handles.extend(new_handles);
+        }
     }
 
     /// Stop the scheduler
     ///
     /// This will gracefully shut down the scheduler and wait for running tasks
     pub async fn stop(&self) -> Result<()> {
+        let _ = self.shutdown_tx.send(());
+
         let mut running = self.running.write().await;
         if !*running {
             return Ok(());
@@ -212,5 +297,47 @@ mod tests {
         assert!(scheduler.is_err());
     }
 
-    // TODO: Add more tests
+    #[tokio::test]
+    async fn test_task_scheduling() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        struct CountingTask {
+            count: Arc<AtomicUsize>,
+        }
+
+        #[async_trait::async_trait]
+        impl Task for CountingTask {
+            async fn execute(&self) -> Result<()> {
+                self.count.fetch_add(1, Ordering::SeqCst);
+                Ok(())
+            }
+            fn name(&self) -> &str {
+                "counter"
+            }
+        }
+
+        let scheduler = Scheduler::new(2).unwrap();
+        let count = Arc::new(AtomicUsize::new(0));
+
+        scheduler
+            .schedule(
+                "test-task",
+                "* * * * * *",
+                Arc::new(CountingTask {
+                    count: count.clone(),
+                }),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(scheduler.task_count().await, 1);
+    }
+
+    #[tokio::test]
+    async fn test_shutdown() {
+        let scheduler = Scheduler::new(2).unwrap();
+
+        let result = scheduler.stop().await;
+        assert!(result.is_ok());
+    }
 }

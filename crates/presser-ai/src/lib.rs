@@ -27,7 +27,7 @@
 //!
 //! let client = AiClient::new(config)?;
 //! let summary = client.summarize("Long article content...").await?;
-//! println!("Summary: {}", summary);
+//! println!("Summary: {}", summary.text);
 //! # Ok(())
 //! # }
 //! ```

@@ -8,7 +8,7 @@ tags = ["tech", "programming", "startup"]
 enabled = true
 
 # Update more frequently than default (every 2 hours)
-update_interval = "0 */2 * * *"
+update_interval = "0 0 */2 * * *"
 
 # Custom AI prompt for this feed
 custom_prompt = """Summarize this Hacker News post. Focus on:
@@ -37,7 +37,7 @@ url = "https://techcrunch.com/feed/"
 name = "TechCrunch"
 tags = ["startup", "venture", "tech"]
 enabled = true
-update_interval = "0 */3 * * *"
+update_interval = "0 0 */3 * * *"
 
 [[feed]]
 url = "https://www.wired.com/feed/rss"
@@ -53,7 +53,7 @@ url = "https://arstechnica.com/feed/"
 name = "Ars Technica"
 tags = ["tech", "science", "deep-dive"]
 enabled = true
-update_interval = "0 */4 * * *"
+update_interval = "0 0 */4 * * *"
 
 custom_prompt = """Create a detailed summary of this technical article.
 Include key technical details, context, and implications.

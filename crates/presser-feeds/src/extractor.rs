@@ -2,6 +2,8 @@
 
 use crate::FeedError;
 use anyhow::Result;
+use std::io::Cursor;
+use url::Url;
 
 /// Content extractor that extracts main article content from HTML
 pub struct ContentExtractor;
@@ -14,13 +16,15 @@ impl ContentExtractor {
 
     /// Extract main content from HTML
     pub fn extract(&self, html: &str, url: &str) -> Result<String, FeedError> {
-        // TODO: Implement content extraction
-        // 1. Parse HTML
-        // 2. Apply readability algorithm to extract main content
-        // 3. Convert to clean text
-        // 4. Remove scripts, styles, navigation, etc.
+        let parsed_url = Url::parse(url)
+            .map_err(|e| FeedError::InvalidUrl(e.to_string()))?;
 
-        todo!("Implement content extraction for {}", url)
+        let mut cursor = Cursor::new(html.as_bytes());
+
+        let product = readability::extractor::extract(&mut cursor, &parsed_url)
+            .map_err(|e| FeedError::ExtractionError(e.to_string()))?;
+
+        Ok(product.text)
     }
 
     /// Convert HTML to plain text
@@ -42,7 +46,7 @@ mod tests {
 
     #[test]
     fn test_extractor_creation() {
-        let extractor = ContentExtractor::new();
+        let _extractor = ContentExtractor::new();
         // Extractor created successfully
     }
 
@@ -55,5 +59,45 @@ mod tests {
         assert!(text.contains("world"));
     }
 
-    // TODO: Add more tests
+    #[test]
+    fn test_extract_simple_html() {
+        let extractor = ContentExtractor::new();
+        let html = r#"
+            <!DOCTYPE html>
+            <html>
+            <head><title>Test Article</title></head>
+            <body>
+                <article>
+                    <h1>Article Title</h1>
+                    <p>This is the main content of the article.</p>
+                    <p>It has multiple paragraphs with important information.</p>
+                </article>
+            </body>
+            </html>
+        "#;
+        let url = "https://example.com/article";
+
+        let result = extractor.extract(html, url);
+        assert!(result.is_ok());
+
+        let text = result.unwrap();
+        assert!(!text.is_empty());
+        assert!(text.contains("main content"));
+        assert!(text.contains("important information"));
+    }
+
+    #[test]
+    fn test_extract_invalid_url() {
+        let extractor = ContentExtractor::new();
+        let html = "<p>Some content</p>";
+        let invalid_url = "not a valid url";
+
+        let result = extractor.extract(html, invalid_url);
+        assert!(result.is_err());
+
+        match result {
+            Err(FeedError::InvalidUrl(_)) => {},
+            _ => panic!("Expected InvalidUrl error"),
+        }
+    }
 }

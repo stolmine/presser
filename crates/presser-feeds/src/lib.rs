@@ -18,7 +18,7 @@
 //!
 //! # async fn example() -> anyhow::Result<()> {
 //! let fetcher = FeedFetcher::new()?;
-//! let entries = fetcher.fetch("https://example.com/feed.xml").await?;
+//! let (_metadata, entries) = fetcher.fetch("https://example.com/feed.xml").await?;
 //! for entry in entries {
 //!     println!("{}: {}", entry.title, entry.url);
 //! }
@@ -126,13 +126,36 @@ impl FeedFetcher {
     pub async fn fetch(&self, url: &str) -> Result<(FeedMetadata, Vec<FeedEntry>)> {
         tracing::info!("Fetching feed: {}", url);
 
-        // TODO: Implement feed fetching
-        // 1. Make HTTP GET request
-        // 2. Parse response body as RSS/Atom
-        // 3. Convert to FeedMetadata and Vec<FeedEntry>
-        // 4. Optionally extract full content for each entry
+        let response = self.client
+            .get(url)
+            .send()
+            .await
+            .map_err(|e| {
+                if e.is_timeout() {
+                    FeedError::Timeout(url.to_string())
+                } else {
+                    FeedError::HttpError(e)
+                }
+            })?;
 
-        todo!("Implement feed fetching for {}", url)
+        let status = response.status();
+        if !status.is_success() {
+            return Err(FeedError::HttpStatus {
+                url: url.to_string(),
+                status: status.as_u16(),
+            }.into());
+        }
+
+        let bytes = response.bytes().await
+            .map_err(FeedError::HttpError)?;
+
+        let (mut metadata, entries) = self.parser.parse(&bytes)?;
+
+        if metadata.url.is_empty() {
+            metadata.url = url.to_string();
+        }
+
+        Ok((metadata, entries))
     }
 
     /// Fetch and parse a feed, extracting full content for each entry
@@ -141,8 +164,9 @@ impl FeedFetcher {
 
         // Extract full content for each entry
         for entry in &mut entries {
-            if let Ok(content) = self.extract_content(&entry.url).await {
-                entry.content_text = Some(content);
+            match self.extract_content(&entry.url).await {
+                Ok(content) => entry.content_text = Some(content),
+                Err(e) => tracing::warn!("Failed to extract content for {}: {}", entry.url, e),
             }
         }
 
@@ -153,13 +177,24 @@ impl FeedFetcher {
     pub async fn extract_content(&self, url: &str) -> Result<String> {
         tracing::debug!("Extracting content from: {}", url);
 
-        // TODO: Implement content extraction
-        // 1. Fetch HTML from URL
-        // 2. Apply readability algorithm
-        // 3. Convert to clean text
-        // 4. Return extracted content
+        let response = self.client
+            .get(url)
+            .send()
+            .await
+            .map_err(FeedError::HttpError)?;
 
-        todo!("Implement content extraction for {}", url)
+        let status = response.status();
+        if !status.is_success() {
+            return Err(FeedError::HttpStatus {
+                url: url.to_string(),
+                status: status.as_u16(),
+            }.into());
+        }
+
+        let html = response.text().await
+            .map_err(FeedError::HttpError)?;
+
+        Ok(self.extractor.extract(&html, url)?)
     }
 
     /// Get a reference to the HTTP client
@@ -168,11 +203,6 @@ impl FeedFetcher {
     }
 }
 
-impl Default for FeedFetcher {
-    fn default() -> Self {
-        Self::new().expect("Failed to create default FeedFetcher")
-    }
-}
 
 #[cfg(test)]
 mod tests {

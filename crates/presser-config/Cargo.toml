@@ -21,6 +21,7 @@ toml.workspace = true
 
 # Time handling
 chrono.workspace = true
+cron.workspace = true
 
 # Utilities
 dirs.workspace = true

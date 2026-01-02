@@ -14,6 +14,7 @@ mod engine;
 mod ui;
 
 use commands::*;
+use engine::Engine;
 
 /// Presser - AI-powered RSS feed processor
 #[derive(Parser, Debug)]
@@ -107,28 +108,34 @@ async fn main() -> Result<()> {
     // Execute command
     match cli.command {
         Commands::Add { url, name } => {
-            add_feed(&url, name.as_deref()).await?;
+            let engine = Engine::new().await?;
+            commands::add_feed(&engine, &url, name.as_deref()).await?;
         }
         Commands::Remove { id } => {
-            remove_feed(&id).await?;
+            let engine = Engine::new().await?;
+            commands::remove_feed(&engine, &id).await?;
         }
         Commands::List => {
-            list_feeds().await?;
+            let engine = Engine::new().await?;
+            commands::list_feeds(&engine).await?;
         }
         Commands::Update { feed_id } => {
-            update_feeds(feed_id.as_deref()).await?;
+            let engine = Engine::new().await?;
+            commands::update_feeds(&engine, feed_id.as_deref()).await?;
         }
         Commands::Digest { days, format } => {
             generate_digest(days, &format).await?;
         }
         Commands::Tui => {
-            start_tui().await?;
+            let engine = std::sync::Arc::new(Engine::new().await?);
+            commands::run_tui(engine).await?;
         }
         Commands::Daemon => {
             start_daemon().await?;
         }
         Commands::Stats => {
-            show_stats().await?;
+            let engine = Engine::new().await?;
+            commands::show_stats(&engine).await?;
         }
         Commands::Init => {
             init_config().await?;
