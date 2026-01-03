@@ -27,10 +27,11 @@ impl ContentExtractor {
         Ok(product.text)
     }
 
-    /// Convert HTML to plain text
-    pub fn html_to_text(&self, html: &str) -> String {
-        // TODO: Use html2text to convert HTML to readable plain text
-        html2text::from_read(html.as_bytes(), 80)
+    /// Convert HTML to plain text with improved formatting
+    pub fn html_to_text(&self, html: &str, width: usize) -> String {
+        html2text::config::plain()
+            .string_from_read(html.as_bytes(), width)
+            .unwrap_or_else(|_| html.to_string())
     }
 }
 
@@ -54,7 +55,7 @@ mod tests {
     fn test_html_to_text() {
         let extractor = ContentExtractor::new();
         let html = "<p>Hello <strong>world</strong>!</p>";
-        let text = extractor.html_to_text(html);
+        let text = extractor.html_to_text(html, 80);
         assert!(text.contains("Hello"));
         assert!(text.contains("world"));
     }

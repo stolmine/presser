@@ -1,11 +1,13 @@
 //! Feed parsing implementation
 
-use crate::{FeedEntry, FeedError, FeedMetadata};
+use crate::{ContentExtractor, FeedEntry, FeedError, FeedMetadata};
 use anyhow::Result;
 use feed_rs::parser;
 use sha2::{Digest, Sha256};
 
-/// Feed parser that handles RSS and Atom feeds
+/// Large width for html2text - we store unwrapped, let TUI wrap at display time
+const FEED_TEXT_WIDTH: usize = 10000;
+
 pub struct FeedParser;
 
 impl FeedParser {
@@ -29,6 +31,7 @@ impl FeedParser {
             last_updated: feed.updated,
         };
 
+        let extractor = ContentExtractor::new();
         let entries = feed.entries.into_iter().map(|entry| {
             let id = if entry.id.is_empty() {
                 // Generate stable ID from URL, title, and published date
@@ -42,15 +45,22 @@ impl FeedParser {
                 entry.id
             };
 
+            let summary_html = entry.summary.map(|t| t.content);
+            let content_html = entry.content.and_then(|c| c.body);
+
+            let content_text = content_html.as_ref()
+                .or(summary_html.as_ref())
+                .map(|html| extractor.html_to_text(html, FEED_TEXT_WIDTH));
+
             FeedEntry {
                 id,
                 title: entry.title.map(|t| t.content).unwrap_or_default(),
                 url: entry.links.first().map(|l| l.href.clone()).unwrap_or_default(),
                 published: entry.published,
                 updated: entry.updated,
-                summary: entry.summary.map(|t| t.content),
-                content_html: entry.content.and_then(|c| c.body),
-                content_text: None,
+                summary: summary_html,
+                content_html,
+                content_text,
                 author: entry.authors.first().map(|p| p.name.clone()),
                 categories: entry.categories.iter().map(|c| c.term.clone()).collect(),
             }

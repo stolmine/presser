@@ -150,17 +150,25 @@ Main application binary
 
 ### Phase 2: Additional Commands
 
-2. **Init Command** (presser-core)
+2. **Newsboat Import** (presser-core) - PRIORITY
+   - [ ] Search for `~/.newsboat/urls` or `~/.config/newsboat/urls`
+   - [ ] Parse Newsboat urls format (URL + optional ~tags)
+   - [ ] Import feeds on first run if no feeds exist
+   - [ ] `presser import --newsboat` command for manual import
+   - [ ] Preserve Newsboat tags as presser tags
+
+3. **Init Command** (presser-core)
    - Create default config directory structure
    - Generate sample global.toml
    - Initialize database
+   - Auto-import from Newsboat if found
 
-3. **Daemon Command** (presser-core)
+4. **Daemon Command** (presser-core)
    - Start scheduler as background process
    - Handle graceful shutdown
    - Add PID file management
 
-4. **Digest Command** (presser-core)
+5. **Digest Command** (presser-core)
    - Fetch unread entries
    - Generate AI summaries
    - Format as markdown/HTML
@@ -168,12 +176,42 @@ Main application binary
 
 ### Phase 3: TUI Enhancements
 
-5. **Enhanced TUI** (presser-core)
-   - Content panel for article viewing
-   - Mark as read/unread
-   - Full-text search
-   - Digest generation from UI
-   - Better error display
+5. **TUI Navigation** (presser-core) - COMPLETE
+   - [x] Two-panel layout (feeds | entries)
+   - [x] Tab to switch focus
+   - [x] j/k navigation in both panels
+   - [x] Enter on feed loads entries
+   - [x] Enter on entry opens article reader (full-screen)
+   - [x] Esc/backspace/q to go back
+   - [x] Mark as read on open
+   - [x] 'u' to toggle read/unread
+
+6. **Article Reader View** (presser-core) - COMPLETE
+   - [x] Full content display with scrolling
+   - [ ] Markdown/HTML rendering (using plain text for now)
+   - [x] 'o' to open in browser
+   - [ ] 'y' to yank URL
+   - [x] j/k or arrows to scroll content
+   - [x] g/G to go to top/bottom
+   - [x] PageUp/PageDown for fast scrolling
+   - [ ] Metadata scrolls with body (not fixed header)
+   - [ ] 'n' next unread article (same feed)
+   - [ ] 'r' mark as read
+   - [ ] 'm' random unread article (any feed)
+
+7. **Visual Polish** (presser-core)
+   - [ ] Theming support (config-driven colors)
+   - [ ] Status bar with current feed/article info
+   - [ ] Unread counts in feed list
+   - [ ] Loading indicators for async ops
+   - [ ] Error messages in status bar
+
+8. **Advanced TUI Features** (presser-core)
+   - [ ] '/' for full-text search
+   - [ ] 'a' to add feed (inline prompt)
+   - [ ] 'd' to delete feed (with confirm)
+   - [ ] AI summary display (when available)
+   - [ ] Digest generation from UI
 
 ### Phase 4: Polish
 

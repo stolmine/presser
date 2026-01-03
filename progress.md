@@ -4,6 +4,74 @@ Development notes and session progress. Keep entries brief.
 
 ---
 
+## 2026-01-02 (Reader Polish)
+
+**Reader navigation & display improvements:**
+- Metadata now scrolls with body (not fixed header)
+- `n` next unread article (same feed)
+- `r` mark as read
+- `m` random unread article (any feed)
+- Added `rand` crate for random selection
+
+**Text wrapping fixes:**
+- Added `textwrap` crate with unicode-width
+- Metadata fields wrap properly with aligned continuation lines
+- Margins applied to metadata (same as body)
+- Fixed double-wrap issue: store unwrapped (width=10000), let ratatui wrap at display
+
+**Code quality:**
+- Extracted `mark_entry_as_read()` helper (DRY)
+- Extracted `load_entry_by_id()` helper
+- Pre-computed indent strings to reduce allocations
+- Minimum width fallback for narrow terminals
+
+**Files changed:**
+- `crates/presser-core/src/ui/app.rs` - Reader rendering, new keybindings
+- `crates/presser-feeds/src/parser.rs` - Unwrapped text storage
+- `crates/presser-feeds/src/extractor.rs` - Width parameter for html_to_text
+
+---
+
+## 2026-01-02 (Roadmap Update)
+
+**Decision:** Continuing with Presser vs forking eilmeldung
+- Analyzed eilmeldung architecture (news-flash backend, 40+ deps)
+- AI would be bolted-on there; it's architectural here
+- Key differentiator: AI summarization as core design principle
+
+**TUI Roadmap added to SCAFFOLD_STATUS.md:**
+- Phase 3 expanded: Navigation → Reader → Polish → Advanced
+- Priority: Article reader view (Enter on entry)
+- Current gap: Can navigate entries but can't read them
+
+**Newsboat import added:**
+- Search `~/.newsboat/urls` or `~/.config/newsboat/urls`
+- Parse URL + ~tags format
+- Auto-import on first run, manual `presser import --newsboat`
+
+---
+
+## 2026-01-02 (Article Reader)
+
+**TUI Article Reader implemented:**
+- Full-screen reader view with header (title, date, author)
+- Content display with word wrap
+- j/k scroll, g/G top/bottom, PageUp/PageDown
+- 'o' opens article URL in browser (via `open` crate)
+- 'u' toggles read/unread status
+- Esc/Backspace/q returns to entry list
+- Mark as read on open
+
+**Files changed:**
+- `crates/presser-core/src/ui/app.rs` - Reader state, rendering, key handling
+- `crates/presser-core/Cargo.toml` - Added `open` crate
+
+**Content fallback chain:** content_text → summary → "[No content]"
+
+**39 tests passing**
+
+---
+
 ## 2026-01-02 (MVP Complete)
 
 **Session:** CLI + Basic TUI implemented

@@ -38,6 +38,8 @@ clap.workspace = true
 # TUI
 crossterm.workspace = true
 ratatui.workspace = true
+tui-markdown = "0.3"
+textwrap.workspace = true
 
 # Logging
 tracing.workspace = true
@@ -47,6 +49,8 @@ tracing-subscriber.workspace = true
 dirs.workspace = true
 chrono.workspace = true
 async-trait.workspace = true
+rand.workspace = true
+open = "5"
 
 [dev-dependencies]
 tokio-test = "0.4"
